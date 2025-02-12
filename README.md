@@ -1,30 +1,72 @@
-# DoReMiFaSolLaTiDOS - HTTP Load Testing Tool
+# DoReMiFaSolLaTiDOS - High-Performance HTTP Load Testing Tool
 
-A lightweight, concurrent HTTP load testing tool written in Go. This tool allows you to perform load testing on web servers by sending multiple concurrent GET or POST requests.
+A high-performance, concurrent HTTP load testing tool written in C. This tool allows you to perform load testing on web servers by sending multiple concurrent GET or POST requests with optimized performance and detailed metrics.
 
 ## Features
 
+### Core Features
 - Concurrent request handling with configurable number of threads
 - Support for both GET and POST requests
-- Real-time statistics reporting
+- Real-time performance metrics with colored output
 - Configurable request timeout
-- Graceful shutdown with CTRL+C
+- Graceful shutdown with double Ctrl+C protection
 - Detailed success/failure statistics
 - Connection pooling for better performance
 - Proper error handling and reporting
 
-## Installation
+### Performance Optimizations
+- Thread-local storage for CURL handles
+- Connection pooling and reuse
+- TCP keep-alive support
+- Cache-aligned data structures
+- Exponential backoff for error handling
+- Efficient memory management
+- Zero-copy response handling
 
-Ensure you have Go installed on your system (version 1.13 or later), then:
+### Advanced Metrics
+- Real-time Requests Per Second (RPS)
+- Average latency tracking
+- Success/failure percentages
+- Throttling detection
+- Detailed error reporting
+- HTTP status code distribution
+- Comprehensive final statistics
 
+## Requirements
+
+- C compiler (GCC or Clang)
+- libcurl development package
+- POSIX-compliant system (Linux, macOS, BSD)
+
+### Installing Dependencies
+
+On Debian/Ubuntu:
 ```bash
-# Clone the repository
-git clone [your-repository-url]
-cd [repository-name]
-
-# Build the binary
-go build -o doremifasollatidos
+sudo apt-get install build-essential libcurl4-openssl-dev
 ```
+
+On macOS:
+```bash
+brew install curl
+```
+
+## Building
+
+### Basic Build
+```bash
+gcc -o doremifasollatidos doremifasollatidos.c -lcurl -pthread
+```
+
+### Optimized Build (Recommended)
+```bash
+gcc -O3 -march=native -flto -pthread -o doremifasollatidos doremifasollatidos.c -lcurl
+```
+
+Build options explained:
+- `-O3`: Highest level of optimization
+- `-march=native`: Optimize for the current CPU architecture
+- `-flto`: Enable Link Time Optimization
+- `-pthread`: Enable POSIX threads support
 
 ## Usage
 
@@ -34,7 +76,7 @@ go build -o doremifasollatidos
 - `-p` : URL for POST request (e.g., `-p 'http://example.com'`)
 - `-d` : Data payload for POST request (required when using POST)
 - `-t` : Number of concurrent threads (default: 500)
-- `-timeout` : Request timeout duration (default: 10s)
+- `-timeout` : Request timeout in milliseconds (default: 10000)
 
 ### Examples
 
@@ -44,7 +86,7 @@ go build -o doremifasollatidos
 ./doremifasollatidos -g "http://example.com" -t 100
 
 # GET request with custom timeout
-./doremifasollatidos -g "http://example.com" -t 100 -timeout 5s
+./doremifasollatidos -g "http://example.com" -t 100 -timeout 5000
 ```
 
 #### POST Request
@@ -52,49 +94,85 @@ go build -o doremifasollatidos
 # POST request with form data
 ./doremifasollatidos -p "http://example.com" -d "key1=value1&key2=value2" -t 100
 
-# POST request with custom timeout
-./doremifasollatidos -p "http://example.com" -d "data=test" -t 50 -timeout 3s
+# POST request with custom timeout and threads
+./doremifasollatidos -p "http://example.com" -d "data=test" -t 50 -timeout 3000
 ```
 
-## Output
+## Output and Metrics
 
-The tool provides real-time statistics including:
-- Total number of requests sent
-- Successful requests (HTTP 200)
-- Failed requests (non-200 responses)
-- Throttled requests (HTTP 429)
-- Error count (connection/timeout errors)
+The tool provides real-time statistics and a comprehensive final report:
 
-Example output:
+### Real-time Metrics
 ```
-Requests: 1500 | Success: 1450 | Failures: 20 | Throttled: 25 | Errors: 5
+RPS: 1500 | Avg Latency: 45ms | Success: 1450 | Failures: 20 | Throttled: 25 | Errors: 5 | Codes: 200:1450 429:25 500:20
 ```
 
-## Features in Detail
+### Final Statistics
+```
+Final Statistics:
+Total Requests: 15000
+Average Latency: 48 ms
+Successful: 14500 (96.67%)
+Failed: 450 (3.00%)
+Throttled: 25
+Errors: 25
 
-### Connection Pooling
-The tool implements efficient connection pooling, reusing connections when possible to reduce overhead and improve performance.
+Response Code Distribution:
+HTTP 200: 14500 (96.67%)
+HTTP 429: 25 (0.17%)
+HTTP 500: 475 (3.17%)
+```
 
-### Concurrent Processing
-Uses Go's goroutines and channels for efficient concurrent request processing. Each worker runs independently and reports statistics atomically.
+## Interrupt Handling
 
-### Graceful Shutdown
-- Handles CTRL+C (SIGINT) gracefully
-- Stops new requests
-- Waits for in-flight requests to complete
-- Provides final statistics before exit
+The tool implements a safe shutdown mechanism:
+
+1. First Ctrl+C:
+   - Displays warning message
+   - Initiates graceful shutdown
+   - Waits for ongoing requests to complete
+   - Prints final statistics
+
+2. Second Ctrl+C:
+   - Forces immediate program termination
+   - Use only if graceful shutdown is taking too long
+
+This ensures both safe operation and user control over the shutdown process.
+
+## Performance Features
+
+### Connection Management
+- Efficient connection pooling
+- TCP keep-alive support
+- Connection reuse
+- Optimized curl settings
+
+### Memory Optimization
+- Cache-aligned data structures
+- Thread-local storage
+- Zero-copy response handling
+- Efficient memory allocation
+
+### Concurrency
+- Thread-per-connection model
+- Lock-free statistics collection
+- Atomic operations for counters
+- Thread-safe resource management
 
 ### Error Handling
-- Proper error propagation and reporting
-- Detailed error messages for debugging
-- Continues operation even when individual requests fail
+- Exponential backoff for errors
+- Rate limiting detection
+- Graceful error recovery
+- Detailed error reporting
 
 ## Performance Considerations
 
-- The tool uses connection pooling to maximize performance
-- Each thread maintains its own connection when possible
-- Response bodies are properly drained to allow connection reuse
-- Atomic operations ensure thread-safe statistics collection
+- Each thread maintains its own connection pool
+- Response bodies are efficiently discarded
+- Atomic operations ensure thread-safe statistics
+- Backoff mechanisms prevent server overload
+- Memory alignment optimizes cache usage
+- Graceful shutdown with timeout protection
 
 ## Limitations
 
@@ -108,10 +186,45 @@ Uses Go's goroutines and channels for efficient concurrent request processing. E
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Licensing
+## Performance Tips
 
-The tool is licensed under the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).
+1. **Thread Count**: Start with a thread count equal to 2x the number of CPU cores and adjust based on your needs.
+2. **Timeout Values**: Set timeouts appropriate for your application (default 10s).
+3. **System Limits**: You may need to adjust system limits for maximum performance:
+   ```bash
+   # Increase system limits for high concurrency
+   ulimit -n 65535  # Increase open file limit
+   ```
 
-## Legal disclaimer
+## Troubleshooting
 
-Usage of this tool to interact with targets without prior mutual consent is illegal. It's the end user's responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program. Only use for educational purposes.
+### Common Issues
+
+1. **Too many open files**
+   ```bash
+   sudo sysctl -w fs.file-max=65535
+   ulimit -n 65535
+   ```
+
+2. **Connection refused**
+   - Check if the target server is running
+   - Verify firewall settings
+   - Ensure the URL is correct
+
+3. **High latency**
+   - Reduce thread count
+   - Check network conditions
+   - Monitor system resources
+
+4. **Unexpected termination**
+   - First Ctrl+C initiates graceful shutdown
+   - Wait for ongoing requests to complete
+   - Use second Ctrl+C only if necessary
+
+## License
+
+[Your chosen license]
+
+## Author
+
+[Your name/organization] 
