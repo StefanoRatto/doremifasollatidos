@@ -1,6 +1,6 @@
-# DoReMiFaSolLaTiDOS
+# DoReMiFaSolLaTiDOS - High-Performance HTTP Load Testing Tool
 
-A high-performance, concurrent HTTP load testing tool written in C. This tool allows you to perform load testing on web servers by sending multiple concurrent GET or POST requests with optimized performance and detailed metrics.
+A high-performance, memory-safe concurrent HTTP load testing tool written in C. This tool allows you to perform load testing on web servers by sending multiple concurrent GET or POST requests with optimized performance, comprehensive safety checks, and detailed metrics.
 
 ## Features
 
@@ -12,7 +12,49 @@ A high-performance, concurrent HTTP load testing tool written in C. This tool al
 - Graceful shutdown with double Ctrl+C protection
 - Detailed success/failure statistics
 - Connection pooling for better performance
-- Proper error handling and reporting
+- Comprehensive memory safety checks
+- Thread state tracking and safe cleanup
+
+### Safety Features
+- Input validation for all parameters
+- Memory bounds checking
+- Integer overflow protection
+- Thread state tracking
+- Safe resource cleanup
+- Timeout protection
+- Error recovery
+- NULL pointer protection
+- Buffer overflow prevention
+
+### Memory Safety
+- Safe memory allocation with overflow checks
+- Zero-initialization of all allocated memory
+- Proper alignment handling
+- Resource cleanup coordination
+- Thread-safe operations
+- Memory leak prevention
+- Double-free prevention
+- Safe string handling
+
+### Thread Safety
+- Thread state tracking
+- Atomic operations
+- Safe thread cleanup
+- Resource cleanup coordination
+- Thread initialization verification
+- Thread join timeout protection
+- Thread-local storage safety
+- Signal handling safety
+
+### Input Validation
+- URL format and length validation (max 2048 bytes)
+- Payload size limits (max 1MB)
+- Thread count bounds (1-10000 threads)
+- Command-line argument validation
+- HTTP response validation
+- Timeout validation
+- Resource limit checks
+- State transition validation
 
 ### Performance Optimizations
 - Thread-local storage for CURL handles
@@ -22,6 +64,7 @@ A high-performance, concurrent HTTP load testing tool written in C. This tool al
 - Exponential backoff for error handling
 - Efficient memory management
 - Zero-copy response handling
+- Atomic counters
 
 ### Advanced Metrics
 - Real-time Requests Per Second (RPS)
@@ -31,24 +74,30 @@ A high-performance, concurrent HTTP load testing tool written in C. This tool al
 - Detailed error reporting
 - HTTP status code distribution
 - Comprehensive final statistics
+- Thread state monitoring
 
 ## Requirements
 
 - C compiler (GCC or Clang)
 - libcurl development package
 - POSIX-compliant system (Linux, macOS, BSD)
+- Sufficient system resources for thread limits
 
-### Installing Dependencies
+### System Requirements
 
-On Debian/Ubuntu:
-```bash
-sudo apt-get install build-essential libcurl4-openssl-dev
-```
+- Memory: Depends on thread count (approximately 1MB per thread)
+- CPU: Multi-core recommended
+- File descriptors: At least (thread_count * 2) available
+- Virtual memory: At least 2GB recommended
 
-On macOS:
-```bash
-brew install curl
-```
+### Resource Limits
+
+- Maximum threads: 10000
+- Minimum threads: 1
+- Maximum URL length: 2048 bytes
+- Maximum payload size: 1MB
+- Default timeout: 10 seconds
+- Cleanup timeout: 30 seconds
 
 ## Building
 
@@ -59,14 +108,15 @@ gcc -o doremifasollatidos doremifasollatidos.c -lcurl -pthread
 
 ### Optimized Build (Recommended)
 ```bash
-gcc -O3 -march=native -flto -pthread -o doremifasollatidos doremifasollatidos.c -lcurl
+gcc -O3 -march=native -flto -pthread -Wall -Wextra -Werror -o doremifasollatidos doremifasollatidos.c -lcurl
 ```
 
 Build options explained:
 - `-O3`: Highest level of optimization
-- `-march=native`: Optimize for the current CPU architecture
+- `-march=native`: Optimize for current CPU
 - `-flto`: Enable Link Time Optimization
 - `-pthread`: Enable POSIX threads support
+- `-Wall -Wextra -Werror`: Enable strict warning checks
 
 ## Usage
 
@@ -75,156 +125,124 @@ Build options explained:
 - `-g` : URL for GET request (e.g., `-g 'http://example.com'`)
 - `-p` : URL for POST request (e.g., `-p 'http://example.com'`)
 - `-d` : Data payload for POST request (required when using POST)
-- `-t` : Number of concurrent threads (default: 500)
+- `-t` : Number of concurrent threads (default: 500, range: 1-10000)
 - `-timeout` : Request timeout in milliseconds (default: 10000)
 
-### Examples
+### Safety Considerations
 
-#### GET Request
-```bash
-# Basic GET request with 100 concurrent threads
-./doremifasollatidos -g "http://example.com" -t 100
+1. **Thread Count**: Choose based on system resources:
+   - Start with thread count = 2 * CPU cores
+   - Monitor system load
+   - Stay within system limits
+   - Consider network capacity
 
-# GET request with custom timeout
-./doremifasollatidos -g "http://example.com" -t 100 -timeout 5000
-```
+2. **Memory Usage**:
+   - Each thread uses approximately 1MB
+   - Monitor system memory
+   - Consider payload size
+   - Watch for system limits
 
-#### POST Request
-```bash
-# POST request with form data
-./doremifasollatidos -p "http://example.com" -d "key1=value1&key2=value2" -t 100
+3. **Network Resources**:
+   - Check file descriptor limits
+   - Monitor network capacity
+   - Consider target server limits
+   - Watch for connection limits
 
-# POST request with custom timeout and threads
-./doremifasollatidos -p "http://example.com" -d "data=test" -t 50 -timeout 3000
-```
-
-## Output and Metrics
-
-The tool provides real-time statistics and a comprehensive final report:
-
-### Real-time Metrics
-```
-RPS: 1500 | Avg Latency: 45ms | Success: 1450 | Failures: 20 | Throttled: 25 | Errors: 5 | Codes: 200:1450 429:25 500:20
-```
-
-### Final Statistics
-```
-Final Statistics:
-Total Requests: 15000
-Average Latency: 48 ms
-Successful: 14500 (96.67%)
-Failed: 450 (3.00%)
-Throttled: 25
-Errors: 25
-
-Response Code Distribution:
-HTTP 200: 14500 (96.67%)
-HTTP 429: 25 (0.17%)
-HTTP 500: 475 (3.17%)
-```
-
-## Interrupt Handling
-
-The tool implements a safe shutdown mechanism:
-
-1. First Ctrl+C:
-   - Displays warning message
-   - Initiates graceful shutdown
-   - Waits for ongoing requests to complete
-   - Prints final statistics
-
-2. Second Ctrl+C:
-   - Forces immediate program termination
-   - Use only if graceful shutdown is taking too long
-
-This ensures both safe operation and user control over the shutdown process.
-
-## Performance Features
-
-### Connection Management
-- Efficient connection pooling
-- TCP keep-alive support
-- Connection reuse
-- Optimized curl settings
-
-### Memory Optimization
-- Cache-aligned data structures
-- Thread-local storage
-- Zero-copy response handling
-- Efficient memory allocation
-
-### Concurrency
-- Thread-per-connection model
-- Lock-free statistics collection
-- Atomic operations for counters
-- Thread-safe resource management
+4. **Cleanup Behavior**:
+   - First Ctrl+C: Graceful shutdown
+   - Second Ctrl+C: Immediate exit
+   - 30-second cleanup timeout
+   - Resource cleanup verification
 
 ### Error Handling
-- Exponential backoff for errors
-- Rate limiting detection
-- Graceful error recovery
-- Detailed error reporting
 
-## Performance Considerations
+The tool implements comprehensive error handling:
 
-- Each thread maintains its own connection pool
-- Response bodies are efficiently discarded
-- Atomic operations ensure thread-safe statistics
-- Backoff mechanisms prevent server overload
-- Memory alignment optimizes cache usage
-- Graceful shutdown with timeout protection
+1. **Memory Errors**:
+   - Allocation failures
+   - Overflow protection
+   - NULL pointer checks
+   - Double-free prevention
 
-## Limitations
+2. **Thread Errors**:
+   - Creation failures
+   - Join timeouts
+   - State transitions
+   - Resource cleanup
 
-- Only supports basic GET and POST requests
-- POST data must be URL-encoded
-- No support for custom headers (except Content-Type for POST)
-- No support for HTTPS client certificates
-- Maximum timeout is system dependent
+3. **Network Errors**:
+   - Connection failures
+   - Timeout handling
+   - Protocol errors
+   - Rate limiting
 
-## Performance Tips
-
-1. **Thread Count**: Start with a thread count equal to 2x the number of CPU cores and adjust based on your needs.
-2. **Timeout Values**: Set timeouts appropriate for your application (default 10s).
-3. **System Limits**: You may need to adjust system limits for maximum performance:
-   ```bash
-   # Increase system limits for high concurrency
-   ulimit -n 65535  # Increase open file limit
-   ```
+4. **Input Validation**:
+   - URL format checks
+   - Size limits
+   - Thread bounds
+   - Payload validation
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Too many open files**
+1. **Resource Limits**
    ```bash
-   sudo sysctl -w fs.file-max=65535
-   ulimit -n 65535
+   # Increase system limits
+   ulimit -n 65535  # File descriptors
+   ulimit -u 65535  # Max user processes
    ```
 
-2. **Connection refused**
-   - Check if the target server is running
-   - Verify firewall settings
-   - Ensure the URL is correct
-
-3. **High latency**
+2. **Memory Issues**
    - Reduce thread count
-   - Check network conditions
-   - Monitor system resources
+   - Monitor system memory
+   - Check for leaks
+   - Verify limits
 
-4. **Unexpected termination**
-   - First Ctrl+C initiates graceful shutdown
-   - Wait for ongoing requests to complete
-   - Use second Ctrl+C only if necessary
+3. **Thread Issues**
+   - Check system limits
+   - Reduce thread count
+   - Monitor CPU usage
+   - Check core count
 
-## Contributing
+4. **Network Issues**
+   - Verify connectivity
+   - Check DNS resolution
+   - Monitor bandwidth
+   - Check firewalls
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Performance Tips
 
-# Licensing
+1. **Thread Count Optimization**:
+   - Start with 2 * CPU cores
+   - Increase gradually
+   - Monitor system load
+   - Stay within limits
 
-The tool is licensed under the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).
+2. **Memory Optimization**:
+   - Monitor RSS usage
+   - Check virtual memory
+   - Watch swap usage
+   - Adjust thread count
 
-# Legal disclaimer
+3. **Network Optimization**:
+   - Use keep-alive
+   - Monitor bandwidth
+   - Check latency
+   - Adjust timeouts
 
-Usage of this tool to interact with targets without prior mutual consent is illegal. It's the end user's responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program. Only use for educational purposes.regulations. 
+4. **System Tuning**:
+   ```bash
+   # Optimize system settings
+   sysctl -w net.ipv4.tcp_fin_timeout=30
+   sysctl -w net.ipv4.tcp_max_tw_buckets=65536
+   sysctl -w net.ipv4.tcp_max_syn_backlog=8192
+   ```
+
+## License
+
+[Your chosen license]
+
+## Author
+
+[Your name/organization] 
