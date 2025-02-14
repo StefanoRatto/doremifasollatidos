@@ -182,10 +182,6 @@ This ensures both safe operation and user control over the shutdown process.
 - No support for HTTPS client certificates
 - Maximum timeout is system dependent
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 ## Performance Tips
 
 1. **Thread Count**: Start with a thread count equal to 2x the number of CPU cores and adjust based on your needs.
@@ -223,7 +219,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Contributing
 
-Feel free to submit issues, fork the repository, and create pull requests for any improvements.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 # Licensing
 
