@@ -1,4 +1,4 @@
-# DoReMiFaSolLaTiDOS - High-Performance HTTP Load Testing Tool
+# DoReMiFaSolLaTiDOS
 
 A high-performance, memory-safe concurrent HTTP load testing tool written in C. This tool allows you to perform load testing on web servers by sending multiple concurrent GET or POST requests with optimized performance, comprehensive safety checks, and detailed metrics.
 
@@ -239,10 +239,14 @@ The tool implements comprehensive error handling:
    sysctl -w net.ipv4.tcp_max_syn_backlog=8192
    ```
 
-## License
+## Contributing
 
-[Your chosen license]
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Author
+# Licensing
 
-[Your name/organization] 
+The tool is licensed under the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+# Legal disclaimer
+
+Usage of this tool to interact with targets without prior mutual consent is illegal. It's the end user's responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program. Only use for educational purposes.regulations. 
