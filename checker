@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# Function to display help menu
+show_help() {
+    cat << EOF
+URL Availability Checker
+A simple tool to monitor website availability and response times.
+
+Usage: 
+    $0 <url> <interval_seconds>
+
+Parameters:
+    url               The URL to monitor (must start with http:// or https://)
+    interval_seconds  Time between checks in seconds (must be a positive number)
+
+Example:
+    $0 https://example.com 5    # Check example.com every 5 seconds
+    $0 https://google.com 10    # Check google.com every 10 seconds
+
+Notes:
+    - The script will run indefinitely until interrupted with Ctrl+C
+    - Response times are measured in milliseconds
+    - Requests timeout after 10 seconds
+    - Requests are made using Chrome 122 user agent
+
+EOF
+    exit 1
+}
+
+# Check if help is requested
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    show_help
+fi
+
+# Check if required arguments are provided
+if [ $# -ne 2 ]; then
+    echo "Error: Wrong number of parameters"
+    echo "Try '$0 --help' for more information"
+    exit 1
+fi
+
+URL="$1"
+INTERVAL="$2"
+
+# Chrome User Agent string for Windows
+USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+
+# Validate interval is a positive number
+if ! [[ "$INTERVAL" =~ ^[0-9]+$ ]] || [ "$INTERVAL" -eq 0 ]; then
+    echo "Error: Interval must be a positive number"
+    echo "Try '$0 --help' for more information"
+    exit 1
+fi
+
+# Validate URL format
+if ! [[ "$URL" =~ ^https?:// ]]; then
+    echo "Error: URL must start with http:// or https://"
+    echo "Try '$0 --help' for more information"
+    exit 1
+fi
+
+echo "Monitoring $URL every $INTERVAL seconds..."
+echo "Press Ctrl+C to stop"
+echo
+
+while true; do
+    # Get the start time in milliseconds
+    START_TIME=$(date +%s%N)
+    
+    # Make the HTTP request and capture the response code
+    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -m 10 -A "$USER_AGENT" "$URL")
+    
+    # Get the end time in milliseconds
+    END_TIME=$(date +%s%N)
+    
+    # Calculate duration in milliseconds (division by 1000000 to convert nanoseconds to milliseconds)
+    DURATION=$(( ($END_TIME - $START_TIME) / 1000000 ))
+    
+    # Get current timestamp
+    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    # Print the result
+    echo "[$TIMESTAMP] Status: $RESPONSE, Response Time: ${DURATION}ms"
+    
+    # Wait for the specified interval
+    sleep "$INTERVAL"
+done 
